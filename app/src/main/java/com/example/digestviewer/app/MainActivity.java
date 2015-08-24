@@ -1,5 +1,6 @@
 package com.example.digestviewer.app;
 
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -10,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.os.Build;
+import com.example.digestviewer.app.fragments.*;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -19,12 +21,34 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         if (savedInstanceState == null) {
-            getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment())
-                    .commit();
+            pushFragment(FragmentId.FRAGMENT_MAIN);
         }
     }
 
+    public void pushFragment(FragmentId fragmentId){
+        pushFragment(fragmentId, null);
+    }
+
+    public void pushFragment(FragmentId fragmentId, @Nullable Bundle args) {
+        BaseFragment fragment = null;
+        switch (fragmentId) {
+            case FRAGMENT_MAIN:
+                fragment = new MainFragment();
+                break;
+            case FRAGMENT_LIST:
+                fragment = new ListFragment();
+                break;
+            case FRAGMENT_ARTICLE:
+                fragment = new ArticleFragment();
+                break;
+        }
+        if (args != null) {
+            fragment.setArguments(args);
+        }
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.container, fragment)
+                .commit();
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -46,21 +70,5 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment {
-
-        public PlaceholderFragment() {
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            return rootView;
-        }
     }
 }
