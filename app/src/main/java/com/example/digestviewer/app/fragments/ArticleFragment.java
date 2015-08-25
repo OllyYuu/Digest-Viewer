@@ -5,7 +5,7 @@ package com.example.digestviewer.app.fragments;
  */
 public class ArticleFragment extends BaseFragment {
     @Override
-    FragmentId getFragmentId() {
+    public FragmentId getFragmentId() {
         return FragmentId.FRAGMENT_ARTICLE;
     }
 }

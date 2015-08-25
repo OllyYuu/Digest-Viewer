@@ -46,7 +46,8 @@ public class MainActivity extends ActionBarActivity {
             fragment.setArguments(args);
         }
         getSupportFragmentManager().beginTransaction()
-                .add(R.id.container, fragment)
+                .replace(R.id.container, fragment)
+                .addToBackStack(fragment.getFragmentId().toString())
                 .commit();
     }
 
