@@ -5,4 +5,9 @@ package com.example.digestviewer.app.module;
  */
 public class Source {
     public String name;
+    public String address;
+    public String logoAddress;
+    public int numberArticle;
+    public int numberNewArticle;
+
 }
