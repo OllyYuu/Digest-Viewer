@@ -3,18 +3,18 @@ package com.example.digestviewer.app.scheduler;
 import android.os.Handler;
 import android.os.Looper;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by SER on 25.08.2015.
  */
 public class TaskScheduler {
 
-    private static int MAX_THREADS = 4;
-    private static int KEEP_ALIVE = 10000;
+    private static String NAME = "TaskExecutor";
+
+    private static int MAX_THREADS = 8;
+    private static int KEEP_ALIVE = 30000;
 
     private static TaskScheduler INSTANCE;
 
@@ -29,7 +29,19 @@ public class TaskScheduler {
     private Handler handler;
 
     private TaskScheduler() {
-        executor = new ThreadPoolExecutor(1, MAX_THREADS, KEEP_ALIVE, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>());
+        final AtomicInteger integer = new AtomicInteger();
+        executor = new ThreadPoolExecutor(1, MAX_THREADS, KEEP_ALIVE, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(), new ThreadFactory() {
+            @Override
+            public Thread newThread(final Runnable r) {
+                return new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+                        r.run();
+                    }
+                }, NAME + integer.incrementAndGet());
+            }
+        });
         handler = new Handler(Looper.getMainLooper());
     }
 

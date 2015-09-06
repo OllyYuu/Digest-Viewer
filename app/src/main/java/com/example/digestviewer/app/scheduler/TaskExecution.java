@@ -12,11 +12,13 @@ public class TaskExecution<Result> implements Cancellable, Runnable {
     private static final int STATE_INIT = 0;
     private static final int STATE_STARTED = 1;
     private static final int STATE_COMPLETED = 2;
-    private static final int STATE_CANCELLED = 3;
+    private static final int STATE_ERROR = 3;
+    private static final int STATE_CANCELLED = 4;
 
     private Task<Result> task;
     private Callback<Result> callback;
     private Handler mainHandler;
+    private volatile Thread thread;
 
     private volatile int state = STATE_INIT;
 
@@ -28,6 +30,9 @@ public class TaskExecution<Result> implements Cancellable, Runnable {
 
     @Override
     public synchronized void cancel() {
+        if (thread != null && state == STATE_STARTED) {
+            thread.interrupt();
+        }
         setState(STATE_CANCELLED);
     }
 
@@ -42,20 +47,26 @@ public class TaskExecution<Result> implements Cancellable, Runnable {
     @Override
     public void run() {
         try {
-            onSuccess(task.doRequest());
+            thread = Thread.currentThread();
+            setState(STATE_STARTED);
+            Result result = task.doRequest();
+            if (state != STATE_CANCELLED) {
+                onSuccess(result);
+                onComplete();
+                setState(STATE_COMPLETED);
+            }
         } catch (InterruptedException ex) {
             setState(STATE_CANCELLED);
         } catch (Exception ex) {
-            setState(STATE_COMPLETED);
+            setState(STATE_ERROR);
             onError(ex.toString());
-        } finally {
             onComplete();
         }
 
     }
 
     public void onSuccess(final Result result) {
-        if (callback != null) {
+        if (callback != null && state != STATE_CANCELLED) {
             mainHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -66,7 +77,7 @@ public class TaskExecution<Result> implements Cancellable, Runnable {
     }
 
     public void onError(final String error) {
-        if (callback != null) {
+        if (callback != null && state != STATE_CANCELLED) {
             mainHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -77,7 +88,7 @@ public class TaskExecution<Result> implements Cancellable, Runnable {
     }
 
     public void onComplete() {
-        if (callback != null) {
+        if (callback != null && state != STATE_CANCELLED) {
             mainHandler.post(new Runnable() {
                 @Override
                 public void run() {
